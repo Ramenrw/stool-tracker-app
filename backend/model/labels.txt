@@ -1,0 +1,5 @@
+0 Constipation
+1 Slight constipation
+2 Healthy
+3 Slight diarrhea
+4 Diarrhea

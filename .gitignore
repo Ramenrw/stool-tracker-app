@@ -9,6 +9,12 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/*.db
+backend/.env
+
 # Native
 .kotlin/
 *.orig.*
