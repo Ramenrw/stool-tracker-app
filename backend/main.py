@@ -10,13 +10,12 @@ import sqlite3
 from datetime import datetime, timedelta
 
 app = FastAPI()
-# 1. Create storage folders
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Make uploaded images accessible via URL
 # (e.g., http://your-ip:8000/uploads/image.jpg)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-# 2. Database Setup
+
 DB_PATH = "history.db"
 
 def init_db():
@@ -46,13 +45,11 @@ with open(LABELS_PATH, "r") as f:
 def process_image(image_bytes):
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     img = img.resize((224, 224))
-    img_array = np.array(img, dtype=np.float32)
-    normalized_img = (img_array - 127.5) / 127.5
-    return np.expand_dims(normalized_img, axis=0)
+    img_array = np.array(img, dtype=np.uint8)
+    return np.expand_dims(img_array, axis=0)
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    # Read and save the file
     contents = await file.read()
     filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -60,7 +57,6 @@ async def predict(file: UploadFile = File(...)):
     with open(file_path, "wb") as f:
         f.write(contents)
 
-    # Run AI
     input_data = process_image(contents)
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
@@ -69,7 +65,6 @@ async def predict(file: UploadFile = File(...)):
     prediction_label = labels[top_index]
     confidence = float(output_data[top_index]) / 255.0
 
-    # Save to Database
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("INSERT INTO logs (timestamp, label, confidence, image_path) VALUES (?, ?, ?, ?)",
@@ -103,7 +98,6 @@ async def get_weekly_list():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
-    # Get logs for the current week
     c.execute('''
         SELECT 
             timestamp,
@@ -117,7 +111,6 @@ async def get_weekly_list():
     rows = c.fetchall()
     conn.close()
 
-    # Organize logs by date
     logs_by_date = {}
     for row in rows:
         date_key = row["raw_date"]
@@ -130,7 +123,6 @@ async def get_weekly_list():
             "time": row["time_string"]
         })
 
-    # Generate last 7 days
     weekly_data = []
     for i in range(7):
         current_dt = datetime.now() - timedelta(days=i)
