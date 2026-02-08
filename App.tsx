@@ -3,7 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Pill, Camera, Calendar } from 'lucide-react-native';
+import { Camera, Calendar } from 'lucide-react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 function HomeScreen() {
   return (
@@ -44,8 +45,12 @@ export default function App() {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: '#8B4513',
+          tabBarShowLabel: false, // This removes the names from the bar
           tabBarIcon: ({ color, size }) => {
-            if (route.name === 'Home') return <Pill size={size} color={color} />;
+            if (route.name === 'Home') {
+              // Setting solid={false} renders the unfilled outline version
+              return <FontAwesome5 name="poop" size={size} color={color} solid={false} />;
+            }
             if (route.name === 'Capture') return <Camera size={size} color={color} />;
             return <Calendar size={size} color={color} />;
           },
