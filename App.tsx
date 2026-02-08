@@ -9,6 +9,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { API_URL } from './config';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Calendar as RNCalendar } from 'react-native-calendars';
+import { useNavigationState } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -179,7 +180,7 @@ function CalendarScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ flex: 1, padding: 20 }}>
+      <View style={{ flex: 1, padding: 20, marginTop: 100 }}>
         <Text style={[styles.headerText, { fontSize: 32, marginBottom: 20 }]}>Calendar</Text>
         <View style={styles.tipsContainer}>
           <RNCalendar markingType={'multi-dot'} markedDates={markedDates} theme={{ todayTextColor: '#0095FF', arrowColor: '#0095FF', dotColor: 'red', textDayFontWeight: '600', textMonthFontWeight: '800', textDayHeaderFontWeight: '600' }} />
@@ -189,11 +190,25 @@ function CalendarScreen() {
   );
 }
 
-const CustomTabBarButton = ({ children, onPress }: any) => (
-  <TouchableOpacity style={styles.customButtonContainer} onPress={onPress} activeOpacity={0.7}>
-    <View style={styles.customButton}>{children}</View>
-  </TouchableOpacity>
-);
+const CustomTabBarButton = ({ children, onPress }: any) => {
+  const currentRouteName = useNavigationState((state) => 
+    state ? state.routes[state.index].name : null
+  );
+
+  if (currentRouteName === 'Capture') {
+    return null;
+  }
+
+  return (
+    <TouchableOpacity 
+      style={styles.customButtonContainer} 
+      onPress={onPress} 
+      activeOpacity={0.7}
+    >
+      <View style={styles.customButton}>{children}</View>
+    </TouchableOpacity>
+  );
+};
 
 export default function App() {
   return (
