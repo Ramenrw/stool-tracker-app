@@ -143,7 +143,7 @@ async def get_weekly_list():
                 "label": "No log",
                 "has_log": False
             })
-
+    
     return {"week_logs": weekly_data}
 
 @app.get("/stats/calendar")
