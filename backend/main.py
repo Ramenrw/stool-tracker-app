@@ -103,12 +103,13 @@ async def get_weekly_list():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
-    # 1. Fetch all existing logs for the current week
+    # Get logs for the current week
     c.execute('''
         SELECT 
             timestamp,
             label, 
-            date(timestamp) as raw_date
+            date(timestamp) as raw_date,
+            strftime('%H:%M', timestamp) as time_string
         FROM logs 
         WHERE date(timestamp) >= date('now', 'weekday 1', '-7 days')
         ORDER BY timestamp DESC
@@ -116,32 +117,35 @@ async def get_weekly_list():
     rows = c.fetchall()
     conn.close()
 
-    # 2. Organize logs by date (to handle multiple stools per day)
+    # Organize logs by date
     logs_by_date = {}
     for row in rows:
         date_key = row["raw_date"]
+
         if date_key not in logs_by_date:
             logs_by_date[date_key] = []
-        logs_by_date[date_key].append(row["label"])
 
-    # 3. Generate the last 7 days and fill in "No log" where missing
+        logs_by_date[date_key].append({
+            "label": row["label"], 
+            "time": row["time_string"]
+        })
+
+    # Generate last 7 days
     weekly_data = []
     for i in range(7):
-        # Calculate date for the last 7 days (today down to 6 days ago)
         current_dt = datetime.now() - timedelta(days=i)
         raw_date = current_dt.strftime("%Y-%m-%d")
         display_date = current_dt.strftime("%b %-d, %Y")
 
         if raw_date in logs_by_date:
-            # Add an entry for every stool recorded on that day
-            for label in logs_by_date[raw_date]:
+            for entry in logs_by_date[raw_date]:
                 weekly_data.append({
                     "date": display_date,
-                    "label": label,
+                    "label": entry["label"],
+                    "time": entry["time"],
                     "has_log": True
                 })
         else:
-            # No data for this day
             weekly_data.append({
                 "date": display_date,
                 "label": "No log",
@@ -154,7 +158,6 @@ async def get_weekly_list():
 async def get_calendar_dots():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    # Groups by day so your friend can put dots on the calendar
     c.execute("SELECT date(timestamp) as day, COUNT(*) as count FROM logs GROUP BY day")
     rows = c.fetchall()
     conn.close()
@@ -165,7 +168,6 @@ async def get_daily_tips():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    # Logic: Look at the last poop from YESTERDAY
     c.execute("SELECT label FROM logs WHERE date(timestamp) = date('now', '-1 day') ORDER BY timestamp DESC LIMIT 1")
     yesterday = c.fetchone()
     conn.close()
